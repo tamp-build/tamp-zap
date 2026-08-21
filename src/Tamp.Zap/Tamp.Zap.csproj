@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <RootNamespace>Tamp.Zap</RootNamespace>
+    <AssemblyName>Tamp.Zap</AssemblyName>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package">
+    <PackageId>Tamp.Zap</PackageId>
+    <Description>Tamp CommandPlan wrappers for the ZAP DAST scanner (Apache-2.0). Drives the Automation Framework (declarative YAML plans covering contexts/auth, OpenAPI import, spider, AJAX spider, active scan, and native SARIF reporting) plus the packaged baseline/full/api scan scripts. Runs via the official Docker image by default — no JRE required on the runner — or against a local zap.sh install. Host-to-container path translation and env-var secret substitution included. Feeds SARIF straight into the Tamp security pipeline.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(TampCorePath)" Condition="'$(TampCoreMode)' == 'project'" />
+    <PackageReference Include="Tamp.Core" Condition="'$(TampCoreMode)' == 'package'" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+  </ItemGroup>
+
+</Project>
