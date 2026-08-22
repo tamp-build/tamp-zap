@@ -178,6 +178,28 @@ public class ZapAutomationPlanTests
         Assert.Contains("we\\\"ird", yaml, StringComparison.Ordinal);
     }
 
+    // ------------------------------------------------------------------
+    // On-disk report name
+    // ------------------------------------------------------------------
+
+    [Theory]
+    [InlineData("zap.sarif", "zap.sarif.json")]
+    [InlineData("report", "report.json")]
+    [InlineData("zap.sarif.json", "zap.sarif.json")]
+    [InlineData("ZAP.SARIF.JSON", "ZAP.SARIF.JSON")]
+    public void Sarif_report_resolves_to_the_name_zap_actually_writes(string configured, string onDisk)
+    {
+        // ZAP appends the template extension when the configured name lacks
+        // it. Verified against ZAP 2.17.0: reportFile "zap.sarif" produced
+        // "zap.sarif.json". A caller looking for the configured name finds
+        // nothing and silently ingests an empty scan.
+        Assert.Equal(onDisk, ZapAutomationPlan.SarifReportFileOnDisk(configured));
+    }
+
+    [Fact]
+    public void Sarif_report_name_rejects_null()
+        => Assert.Throws<ArgumentNullException>(() => ZapAutomationPlan.SarifReportFileOnDisk(null!));
+
     private static IEnumerable<string> AllProfiles() =>
     [
         ZapAutomationPlan.Anonymous(Target),

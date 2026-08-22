@@ -45,6 +45,25 @@ public static class ZapAutomationPlan
     /// <summary>Report template id for SARIF 2.1.0 output (reports add-on).</summary>
     public const string SarifTemplate = "sarif-json";
 
+    /// <summary>
+    /// The filename ZAP actually writes for a given <c>reportFile</c> under the
+    /// <see cref="SarifTemplate"/> template.
+    /// </summary>
+    /// <remarks>
+    /// ZAP's report job appends the template's extension when the configured
+    /// name doesn't already carry it — ask for <c>zap.sarif</c> and you get
+    /// <c>zap.sarif.json</c> on disk. Verified against ZAP 2.17.0. Callers that
+    /// go looking for the report by the name they configured find nothing, so
+    /// resolve the on-disk name through this rather than assuming.
+    /// </remarks>
+    public static string SarifReportFileOnDisk(string reportFile)
+    {
+        ArgumentNullException.ThrowIfNull(reportFile);
+        return reportFile.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
+            ? reportFile
+            : reportFile + ".json";
+    }
+
     /// <summary>Conventional env var name for a bearer token placeholder.</summary>
     public const string DefaultTokenEnvVar = "ZAP_AUTH_TOKEN";
 

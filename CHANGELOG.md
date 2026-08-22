@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is [SemVer](https://semver.org/).
 
+## [0.1.1] - 2026-08-21
+
+### Added
+
+- `ZapAutomationPlan.SarifReportFileOnDisk(reportFile)` — resolves the filename ZAP actually writes.
+
+### Notes
+
+- ZAP's report job appends the template's extension when the configured name lacks it: `reportFile: zap.sarif` produces **`zap.sarif.json`** on disk. Verified against ZAP 2.17.0 running the `sarif-json` template. A caller that goes looking for the name it configured finds nothing — and if it doesn't check, silently ingests an empty scan. Resolve through the helper rather than assuming.
+
 ## [0.1.0] - 2026-08-21
 
 Initial release. TAM-278.
