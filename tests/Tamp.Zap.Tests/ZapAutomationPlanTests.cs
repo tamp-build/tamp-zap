@@ -179,6 +179,82 @@ public class ZapAutomationPlanTests
     }
 
     // ------------------------------------------------------------------
+    // Exclusions
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void No_exclude_paths_by_default()
+    {
+        Assert.DoesNotContain("excludePaths:", ZapAutomationPlan.Anonymous(Target), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Exclude_paths_land_in_the_context()
+    {
+        var yaml = ZapAutomationPlan.Anonymous(Target, excludePaths: [".*/assets/.*", ".*/vendor/.*"]);
+
+        Assert.Contains("excludePaths:", yaml, StringComparison.Ordinal);
+        Assert.Contains("\".*/assets/.*\"", yaml, StringComparison.Ordinal);
+        Assert.Contains("\".*/vendor/.*\"", yaml, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Blank_exclude_entries_are_dropped()
+    {
+        var yaml = ZapAutomationPlan.Anonymous(Target, excludePaths: ["", "   ", ".*/assets/.*"]);
+
+        // Only the one real entry should appear under excludePaths.
+        Assert.Contains("excludePaths:", yaml, StringComparison.Ordinal);
+        Assert.Contains(".*/assets/.*", yaml, StringComparison.Ordinal);
+        var excludeLines = yaml
+            .Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries)
+            .SkipWhile(l => !l.Contains("excludePaths:", StringComparison.Ordinal))
+            .Skip(1)
+            .TakeWhile(l => l.TrimStart().StartsWith("- ", StringComparison.Ordinal))
+            .ToList();
+        Assert.Single(excludeLines);
+    }
+
+    [Fact]
+    public void Api_and_spa_profiles_accept_exclusions_too()
+    {
+        Assert.Contains("excludePaths:",
+            ZapAutomationPlan.Api(Target, $"{Target}/openapi/v1.json", excludePaths: [".*/assets/.*"]),
+            StringComparison.Ordinal);
+        Assert.Contains("excludePaths:",
+            ZapAutomationPlan.Spa(Target, excludePaths: [".*/assets/.*"]),
+            StringComparison.Ordinal);
+    }
+
+    [Theory]
+    // Observed verbatim in a real ZAP scan of a Vite-built SPA — the whole
+    // reason these defaults exist. The hash changes every build, so a finding
+    // here is a brand-new finding on every deploy and can never be triaged.
+    [InlineData("https://app.test/assets/index-BKzcn7lZ.css")]
+    [InlineData("https://app.test/assets/index-olIdiVA-.js")]
+    [InlineData("https://app.test/static/main.a1b2c3d4e5.js")]
+    [InlineData("https://app.test/build/chunk-Q7R8S9T0.map")]
+    public void Default_asset_excludes_match_fingerprinted_bundles(string url)
+    {
+        Assert.Contains(ZapAutomationPlan.DefaultAssetExcludes,
+            p => System.Text.RegularExpressions.Regex.IsMatch(url, p));
+    }
+
+    [Theory]
+    // Real routes from the same scan that must stay in scope — these are where
+    // the actionable findings live.
+    [InlineData("https://app.test/")]
+    [InlineData("https://app.test/robots.txt")]
+    [InlineData("https://app.test/sitemap.xml")]
+    [InlineData("https://app.test/openapi/v1.json")]
+    [InlineData("https://app.test/api/projects")]
+    public void Default_asset_excludes_do_not_swallow_real_routes(string url)
+    {
+        Assert.DoesNotContain(ZapAutomationPlan.DefaultAssetExcludes,
+            p => System.Text.RegularExpressions.Regex.IsMatch(url, p));
+    }
+
+    // ------------------------------------------------------------------
     // On-disk report name
     // ------------------------------------------------------------------
 

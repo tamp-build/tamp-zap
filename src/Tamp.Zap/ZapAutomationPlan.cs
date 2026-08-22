@@ -64,6 +64,26 @@ public static class ZapAutomationPlan
             : reportFile + ".json";
     }
 
+    /// <summary>
+    /// Regexes covering the fingerprinted static assets that bundlers emit —
+    /// Vite's <c>/assets/</c>, webpack's <c>/static/</c>, and hashed
+    /// js/css/map files wherever they land.
+    /// </summary>
+    /// <remarks>
+    /// Worth excluding for a reason beyond noise: the filename changes on every
+    /// build, so a finding against one is a new finding every deploy. It can
+    /// never be triaged, aged, or trended — it just churns. The underlying
+    /// issue (a missing header, a caching directive) is nearly always reported
+    /// against the document root as well, where it IS stable.
+    /// </remarks>
+    public static readonly IReadOnlyList<string> DefaultAssetExcludes =
+    [
+        @".*/assets/.*",
+        @".*/static/.*",
+        @".*\.[0-9a-fA-F]{8,}\.(js|css|map)$",
+        @".*-[0-9a-zA-Z_-]{8,}\.(js|css|map)$",
+    ];
+
     /// <summary>Conventional env var name for a bearer token placeholder.</summary>
     public const string DefaultTokenEnvVar = "ZAP_AUTH_TOKEN";
 
@@ -77,13 +97,24 @@ public static class ZapAutomationPlan
     /// <param name="target">Base URL of the deployed app.</param>
     /// <param name="reportFile">SARIF report filename, relative to the plan's work dir.</param>
     /// <param name="spiderMinutes">Spider budget. Default 2.</param>
-    public static string Anonymous(string target, string reportFile = "zap-anon.sarif", int spiderMinutes = 2)
+    /// <param name="excludePaths">
+    /// Regexes for URLs the context should ignore. Fingerprinted static assets
+    /// are the usual case: a bundler rewrites <c>/assets/index-A1b2C3.js</c> on
+    /// every build, so findings against them get a new identity each deploy and
+    /// can never age or trend. <see cref="DefaultAssetExcludes"/> covers the
+    /// common layouts.
+    /// </param>
+    public static string Anonymous(
+        string target,
+        string reportFile = "zap-anon.sarif",
+        int spiderMinutes = 2,
+        IEnumerable<string>? excludePaths = null)
     {
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(reportFile);
 
         var sb = new StringBuilder();
-        WriteEnv(sb, "anon", target);
+        WriteEnv(sb, "anon", target, excludePaths);
         sb.AppendLine("jobs:");
         WriteSpider(sb, "anon", spiderMinutes);
         sb.AppendLine("  - type: passiveScan-wait");
@@ -110,7 +141,8 @@ public static class ZapAutomationPlan
         string apiDefinitionUrl,
         string reportFile = "zap-api.sarif",
         string tokenEnvVar = DefaultTokenEnvVar,
-        bool graphql = false)
+        bool graphql = false,
+        IEnumerable<string>? excludePaths = null)
     {
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(apiDefinitionUrl);
@@ -118,7 +150,7 @@ public static class ZapAutomationPlan
         ArgumentNullException.ThrowIfNull(tokenEnvVar);
 
         var sb = new StringBuilder();
-        WriteEnv(sb, "api", target);
+        WriteEnv(sb, "api", target, excludePaths);
         sb.AppendLine("jobs:");
         // replacer runs before every request, so the token rides on the spec
         // fetch and each scanned request alike.
@@ -162,7 +194,8 @@ public static class ZapAutomationPlan
         string reportFile = "zap-spa.sarif",
         string cookieName = "session",
         string cookieEnvVar = DefaultCookieEnvVar,
-        int ajaxMinutes = 5)
+        int ajaxMinutes = 5,
+        IEnumerable<string>? excludePaths = null)
     {
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(reportFile);
@@ -170,7 +203,7 @@ public static class ZapAutomationPlan
         ArgumentNullException.ThrowIfNull(cookieEnvVar);
 
         var sb = new StringBuilder();
-        WriteEnv(sb, "spa", target);
+        WriteEnv(sb, "spa", target, excludePaths);
         sb.AppendLine("jobs:");
         sb.AppendLine("  - type: replacer");
         sb.AppendLine("    parameters:");
@@ -215,7 +248,8 @@ public static class ZapAutomationPlan
         return path;
     }
 
-    private static void WriteEnv(StringBuilder sb, string contextName, string target)
+    private static void WriteEnv(
+        StringBuilder sb, string contextName, string target, IEnumerable<string>? excludePaths = null)
     {
         sb.AppendLine("env:");
         sb.AppendLine("  contexts:");
@@ -225,6 +259,12 @@ public static class ZapAutomationPlan
         sb.AppendLine("      includePaths:");
         // Anchor the include to the target so the scan can't wander off-site.
         sb.AppendLine($"        - \"{Escape(target.TrimEnd('/'))}.*\"");
+        var excludes = (excludePaths ?? []).Where(p => !string.IsNullOrWhiteSpace(p)).ToList();
+        if (excludes.Count > 0)
+        {
+            sb.AppendLine("      excludePaths:");
+            foreach (var p in excludes) sb.AppendLine($"        - \"{Escape(p)}\"");
+        }
         sb.AppendLine("  parameters:");
         sb.AppendLine("    failOnError: true");
         sb.AppendLine("    progressToStdout: true");

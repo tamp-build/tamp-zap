@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is [SemVer](https://semver.org/).
 
+## [0.1.2] - 2026-08-21
+
+### Added
+
+- `excludePaths` on all three plan profiles, and `ZapAutomationPlan.DefaultAssetExcludes` covering fingerprinted bundles (Vite `/assets/`, webpack `/static/`, hashed `js|css|map`).
+
+### Notes
+
+- Excluding fingerprinted assets matters for more than noise. A bundler rewrites `/assets/index-A1b2C3.js` on every build, so a finding against one is a **new** finding every deploy — it can never be triaged, aged, or trended, it only churns. The underlying issue (a missing header, a caching directive) is almost always reported against the document root too, where it is stable. Regexes are tested against filenames observed in a real scan of a Vite-built SPA, and against the real routes that must stay in scope.
+
 ## [0.1.1] - 2026-08-21
 
 ### Added
