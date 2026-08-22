@@ -125,6 +125,56 @@ public static class ZapAutomationPlan
     }
 
     /// <summary>
+    /// Active profile — spider, AJAX-spider, then a full active scan, with no
+    /// credentials. The unauthenticated attack surface, which is the most
+    /// common open-source DAST scenario and the one a public-facing app is
+    /// judged on.
+    /// </summary>
+    /// <remarks>
+    /// <strong>This writes.</strong> Active scan rules submit forms and fuzz
+    /// every parameter they discover, so they create, modify and delete data
+    /// through whatever endpoints answer. Disposable targets only — never point
+    /// this at an environment whose data matters.
+    /// </remarks>
+    /// <param name="target">Base URL of the deployed app.</param>
+    /// <param name="reportFile">SARIF report filename, relative to the plan's work dir.</param>
+    /// <param name="spiderMinutes">Classic spider budget. Default 2.</param>
+    /// <param name="ajaxMinutes">AJAX spider budget — needed for client-routed front ends. Default 5.</param>
+    /// <param name="maxScanMinutes">Ceiling on the active scan. Default 60.</param>
+    /// <param name="excludePaths">Regexes to keep out of the context. See <see cref="DefaultAssetExcludes"/>.</param>
+    public static string Active(
+        string target,
+        string reportFile = "zap-active.sarif",
+        int spiderMinutes = 2,
+        int ajaxMinutes = 5,
+        int maxScanMinutes = 60,
+        IEnumerable<string>? excludePaths = null)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(reportFile);
+
+        var sb = new StringBuilder();
+        WriteEnv(sb, "active", target, excludePaths);
+        sb.AppendLine("jobs:");
+        WriteSpider(sb, "active", spiderMinutes);
+        sb.AppendLine("  - type: spiderAjax");
+        sb.AppendLine("    parameters:");
+        sb.AppendLine("      context: active");
+        sb.AppendLine("      browserId: firefox-headless");
+        sb.AppendLine($"      maxDuration: {ajaxMinutes}");
+        sb.AppendLine("  - type: passiveScan-wait");
+        sb.AppendLine("    parameters:");
+        sb.AppendLine("      maxDuration: 5");
+        sb.AppendLine("  - type: activeScan");
+        sb.AppendLine("    parameters:");
+        sb.AppendLine("      context: active");
+        sb.AppendLine("      maxRuleDurationInMins: 5");
+        sb.AppendLine($"      maxScanDurationInMins: {maxScanMinutes}");
+        WriteReport(sb, reportFile);
+        return sb.ToString();
+    }
+
+    /// <summary>
     /// API profile — import an API definition, then active-scan it with a bearer
     /// token injected on every request.
     /// </summary>

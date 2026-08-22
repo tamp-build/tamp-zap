@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is [SemVer](https://semver.org/).
 
+## [0.2.0] - 2026-08-22
+
+### Added
+
+- `ZapAutomationPlan.Active(...)` — spider + AJAX spider + full active scan, **no credentials**.
+
+### Notes
+
+- The three original profiles covered anonymous-passive, token-authenticated-active and session-authenticated-active, and left out the most common open-source DAST scenario entirely: an unauthenticated active scan. That is the surface a public-facing app is actually judged on, and there was no way to express it.
+- `Active` **writes**. Active scan rules submit forms and fuzz every parameter they find, so they create, modify and delete data through whatever endpoints answer. Disposable targets only. A test asserts the profile emits no `replacer` rule — a stray credential would silently change which surface is being measured.
+
 ## [0.1.2] - 2026-08-21
 
 ### Added

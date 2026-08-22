@@ -63,6 +63,50 @@ public class ZapAutomationPlanTests
     }
 
     // ------------------------------------------------------------------
+    // Active (unauthenticated)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void Active_profile_spiders_both_ways_then_active_scans()
+    {
+        var yaml = ZapAutomationPlan.Active(Target);
+
+        Assert.Contains("type: spider", yaml, StringComparison.Ordinal);
+        Assert.Contains("type: spiderAjax", yaml, StringComparison.Ordinal);
+        Assert.Contains("type: activeScan", yaml, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Active_profile_carries_no_credentials()
+    {
+        // The point of this profile is the UNAUTHENTICATED surface. A stray
+        // replacer rule would silently change what is being measured.
+        var yaml = ZapAutomationPlan.Active(Target);
+
+        Assert.DoesNotContain("replacer", yaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("Authorization", yaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("Cookie", yaml, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Active_profile_budgets_are_configurable()
+    {
+        var yaml = ZapAutomationPlan.Active(Target, spiderMinutes: 3, ajaxMinutes: 9, maxScanMinutes: 25);
+
+        Assert.Contains("maxDuration: 3", yaml, StringComparison.Ordinal);
+        Assert.Contains("maxDuration: 9", yaml, StringComparison.Ordinal);
+        Assert.Contains("maxScanDurationInMins: 25", yaml, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Active_profile_honours_exclusions()
+    {
+        Assert.Contains("excludePaths:",
+            ZapAutomationPlan.Active(Target, excludePaths: ZapAutomationPlan.DefaultAssetExcludes),
+            StringComparison.Ordinal);
+    }
+
+    // ------------------------------------------------------------------
     // API
     // ------------------------------------------------------------------
 
@@ -279,6 +323,7 @@ public class ZapAutomationPlanTests
     private static IEnumerable<string> AllProfiles() =>
     [
         ZapAutomationPlan.Anonymous(Target),
+        ZapAutomationPlan.Active(Target),
         ZapAutomationPlan.Api(Target, $"{Target}/openapi/v1.json"),
         ZapAutomationPlan.Spa(Target),
     ];
