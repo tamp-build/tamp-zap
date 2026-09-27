@@ -36,7 +36,7 @@ public enum ZapRunMode
 /// <strong>Secrets.</strong> Never bake a bearer token or session cookie into a plan
 /// file. The ZAP Automation Framework substitutes <c>${VAR}</c> from the process
 /// environment, so put a placeholder in the plan and pass the value through
-/// <see cref="SetSecretEnvironmentVariable"/>. In Docker mode those names are
+/// <c>SetSecretEnvironmentVariable</c>. In Docker mode those names are
 /// forwarded with <c>-e NAME</c> (value inherited from the runner's environment,
 /// so it never lands in the OS process table or the plan file).
 /// </para>
@@ -312,7 +312,7 @@ public enum ZapPackagedScanKind
 /// <remarks>
 /// Convenient for quick adoption, but they hardcode report handling and can't
 /// express authentication contexts. For anything beyond an anonymous smoke scan,
-/// prefer <see cref="Zap.Automation"/>.
+/// prefer <c>Zap.Automation</c>.
 /// <para>
 /// <strong>Exit codes.</strong> <c>0</c> = clean, <c>2</c> = warnings, <c>1</c> = at
 /// least one FAIL rule tripped, <c>3</c> = the scan itself failed. Treat <c>0</c>,
