@@ -1,8 +1,8 @@
 namespace Tamp.Zap;
 
 /// <summary>
-/// Tamp wrappers for the ZAP DAST scanner. <see cref="Automation"/> runs an
-/// Automation Framework plan (the primary path); <see cref="PackagedScan"/> runs
+/// Tamp wrappers for the ZAP DAST scanner. <c>Automation</c> runs an
+/// Automation Framework plan (the primary path); <c>PackagedScan</c> runs
 /// the packaged baseline / full / api scripts.
 /// </summary>
 /// <remarks>

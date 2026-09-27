@@ -186,6 +186,7 @@ public static class ZapAutomationPlan
     /// placeholder — the value is never written to the plan.
     /// </param>
     /// <param name="graphql">True to import as GraphQL rather than OpenAPI.</param>
+    /// <param name="excludePaths">URL path globs to exclude from the scan. Optional.</param>
     public static string Api(
         string target,
         string apiDefinitionUrl,
@@ -239,6 +240,7 @@ public static class ZapAutomationPlan
     /// placeholder — the value is never written to the plan.
     /// </param>
     /// <param name="ajaxMinutes">AJAX spider budget. Default 5.</param>
+    /// <param name="excludePaths">URL path globs to exclude from the scan. Optional.</param>
     public static string Spa(
         string target,
         string reportFile = "zap-spa.sarif",
