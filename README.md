@@ -8,7 +8,7 @@ Tamp wrappers for the **ZAP** DAST scanner — dynamic application security test
 | **Tool license** | Apache-2.0 |
 | **This package** | MIT |
 | **Platform** | Any OS with Docker (default), or any OS with a JRE 17+ and a local `zap.sh` |
-| **Target frameworks** | net8.0 · net9.0 · net10.0 |
+| **Target frameworks** | net10.0 · net11.0 |
 | **SARIF** | Native — no converter step |
 
 > **Naming.** ZAP left OWASP in September 2023 (moving to the Linux Foundation's Software Security Project); in September 2024 the core maintainers joined Checkmarx and it was rebranded *ZAP by Checkmarx*. It remains open source under Apache-2.0. If a contract or policy document says "OWASP ZAP", that's this tool — worth reconciling explicitly in compliance paperwork.
